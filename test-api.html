@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>B2B Platform - API Tester</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .container { max-width: 800px; margin: 0 auto; }
+        button { padding: 10px 20px; margin: 5px; background: #007bff; color: white; border: none; cursor: pointer; }
+        button:hover { background: #0056b3; }
+        pre { background: #f4f4f4; padding: 10px; border-radius: 5px; overflow-x: auto; }
+        input, textarea { width: 100%; padding: 8px; margin: 5px 0; }
+        .section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>B2B Platform - Operator Service API Tester</h1>
+        
+        <div class="section">
+            <h2>1. Health Check</h2>
+            <button onclick="checkHealth()">Check Health</button>
+            <pre id="healthResult"></pre>
+        </div>
+
+        <div class="section">
+            <h2>2. Get All Operators</h2>
+            <button onclick="getAllOperators()">Get All Operators</button>
+            <pre id="getAllResult"></pre>
+        </div>
+
+        <div class="section">
+            <h2>3. Create Operator</h2>
+            <label>Code:</label>
+            <input type="text" id="code" value="OP001" placeholder="OP001">
+            <label>Name:</label>
+            <input type="text" id="name" value="Test Operator" placeholder="Test Operator">
+            <label>Currency:</label>
+            <input type="text" id="currency" value="USD" placeholder="USD">
+            <label>Language:</label>
+            <input type="text" id="language" value="en" placeholder="en">
+            <button onclick="createOperator()">Create Operator</button>
+            <pre id="createResult"></pre>
+        </div>
+
+        <div class="section">
+            <h2>4. Get Operator by ID</h2>
+            <input type="number" id="operatorId" value="1" placeholder="1">
+            <button onclick="getOperatorById()">Get Operator</button>
+            <pre id="getByIdResult"></pre>
+        </div>
+    </div>
+
+    <script>
+        const BASE_URL = 'http://localhost:8081/api/v1';
+
+        async function checkHealth() {
+            try {
+                const response = await fetch('http://localhost:8081/actuator/health');
+                const data = await response.json();
+                document.getElementById('healthResult').textContent = JSON.stringify(data, null, 2);
+            } catch (error) {
+                document.getElementById('healthResult').textContent = 'Error: ' + error.message;
+            }
+        }
+
+        async function getAllOperators() {
+            try {
+                const response = await fetch(BASE_URL + '/operators');
+                const data = await response.json();
+                document.getElementById('getAllResult').textContent = JSON.stringify(data, null, 2);
+            } catch (error) {
+                document.getElementById('getAllResult').textContent = 'Error: ' + error.message;
+            }
+        }
+
+        async function createOperator() {
+            const operator = {
+                code: document.getElementById('code').value,
+                name: document.getElementById('name').value,
+                baseCurrency: document.getElementById('currency').value,
+                baseLanguage: document.getElementById('language').value
+            };
+
+            try {
+                const response = await fetch(BASE_URL + '/operators', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(operator)
+                });
+                const data = await response.json();
+                document.getElementById('createResult').textContent = JSON.stringify(data, null, 2);
+                // Refresh the list
+                getAllOperators();
+            } catch (error) {
+                document.getElementById('createResult').textContent = 'Error: ' + error.message;
+            }
+        }
+
+        async function getOperatorById() {
+            const id = document.getElementById('operatorId').value;
+            try {
+                const response = await fetch(BASE_URL + '/operators/' + id);
+                if (response.ok) {
+                    const data = await response.json();
+                    document.getElementById('getByIdResult').textContent = JSON.stringify(data, null, 2);
+                } else {
+                    document.getElementById('getByIdResult').textContent = 'Error: ' + response.status + ' ' + response.statusText;
+                }
+            } catch (error) {
+                document.getElementById('getByIdResult').textContent = 'Error: ' + error.message;
+            }
+        }
+
+        // Auto-check health on load
+        window.onload = function() {
+            checkHealth();
+        };
+    </script>
+</body>
+</html>

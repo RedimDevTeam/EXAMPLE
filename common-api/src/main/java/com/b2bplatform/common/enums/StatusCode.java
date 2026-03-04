@@ -1,0 +1,83 @@
+package com.b2bplatform.common.enums;
+
+/**
+ * Standard status codes for API responses. All APIs return APIResponse with one of these codes.
+ */
+public enum StatusCode {
+    SUCCESS(0),
+
+    ACCOUNT_BLOCKED(105),
+    INVALID_REQUEST(139),
+    UNAUTHORIZED_ACCESS(113),
+    INSUFFICIENT_BALANCE(130),
+    //INFO_INSUFFICIENT_BALANCE(112),
+
+    LOBBY_SETTINGS_UPDATES(300),
+    LOBBY_TABLES_BETLIMITS(301),
+    LOBBY_DRAW_UPDATE(302),
+    NO_TABLES_FOUND(303),
+    INTERNAL_SERVER_ERROR(304),
+
+    DEALER_NOT_EXISTS(3001),
+    NOT_EXISTS_STUDIO(3002),
+
+    INVALID(4000),
+    INVALID_SESSION(4001),
+    INVALID_GAME_TABLE(4003),
+    INVALID_CASINO(4010),
+    INVALID_TOKEN(4011),
+    INVALID_CREDENTIALS(4024),
+    TABLE_ALREADY_OCCUPIED(5002),
+    SESSION_EXPIRED(5009),
+    ESTABLISHED(5015),
+    UPDATE_BALANCE(6009),
+    WS_PONG(6023),
+
+    RECEIVED(5016),
+    CLOSING(5017),
+    CLOSED(5018),
+    NOT_CANCELLED(5019),
+    SPOT_LIMITS(400),
+
+    BETS_NOT_CONFIRMED(5021),
+    BETS_CONFIRMED(5022),
+    INVALID_DELETE(5003),
+    ACTIVE_DATES(5001),
+    DRAW_DATA(5004),
+    CART_INVALID(600),
+    INVALID_AMOUNT(601),
+    ACTIVE_DRAWS(5000),
+    DRAW_RESULT(5015),
+
+    PAST_RESULT_HISTORY(6000),
+    INVALID_DRAW(7000),
+    DRAW_ALREADY_PROCESSED(7001),
+    DRAW_COMPLETED(7002),
+    DRAW_STARTED(7003),
+    DRAW_NOT_STARTED(7004),
+    DEAL_BALL(7005),
+    NEXT_DRAW(31),
+    START_DRAW(32),
+    ACTIVE_DRAW(33),
+    NO_DRAW(34),
+    DRAW_CANCEL(8000),
+    BALL_DATA(7012),
+    JACKPOT_UPDATE(8001),
+    JACKPOT_WIN(8002),
+    BETS_CLOSED(8003),
+    JACKPOTWINNERS_DATA(8004);
+
+    private final int value;
+
+    StatusCode(int value) {
+        this.value = value;
+    }
+
+    public int getValue() {
+        return value;
+    }
+
+    public int value() {
+        return value;
+    }
+}

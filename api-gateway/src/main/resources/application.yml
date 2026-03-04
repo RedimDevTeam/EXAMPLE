@@ -1,0 +1,160 @@
+server:
+  port: ${SERVER_PORT:8080}
+  forward-headers-strategy: framework
+
+spring:
+  application:
+    name: api-gateway
+  cloud:
+    gateway:
+      default-filters:
+        - DedupeResponseHeader=Access-Control-Allow-Credentials, Access-Control-Allow-Origin
+        - name: Retry
+          args:
+            retries: 3
+            statuses: BAD_GATEWAY,GATEWAY_TIMEOUT
+            methods: GET,POST
+            backoff:
+              firstBackoff: 50ms
+              maxBackoff: 500ms
+              factor: 2
+              basedOnPreviousValue: false
+      globalcors:
+        cors-configurations:
+          '[/**]':
+            allowedOrigins: "*"
+            allowedHeaders: "*"
+            allowedMethods: "*"
+        add-to-simple-url-handler-mapping: true
+      routes:
+        # Operator Service (API Key Required) - dynamic via Eureka
+        - id: operator-service
+          uri: lb://operator-service
+          predicates:
+            - Path=/api/v1/operators/**
+          filters:
+            - name: ApiKeyAuth
+            - name: CircuitBreaker
+              args:
+                name: operatorServiceCircuitBreaker
+                fallbackUri: forward:/fallback/operator
+
+        # Internal: Operator Service (no API key - for Feign service→gateway→target calls)
+        - id: operator-service-internal
+          uri: lb://operator-service
+          predicates:
+            - Path=/internal/api/v1/operators/**
+          filters:
+            - StripPrefix=1
+
+        # Authentication Service
+        - id: auth-service
+          uri: lb://authentication-service
+          predicates:
+            - Path=/api/v1/auth/**
+          filters:
+            - StripPrefix=0
+
+        # Login Page (public)
+        - id: login-page
+          uri: lb://authentication-service
+          predicates:
+            - Path=/login/**
+          filters:
+            - StripPrefix=0
+
+        # Session Service (JWT Required)
+        - id: session-service
+          uri: lb://session-service
+          predicates:
+            - Path=/api/v1/sessions/**
+          filters:
+            - StripPrefix=0
+            - name: JwtAuth
+
+        # Wallet Service (JWT Required)
+        - id: wallet-service
+          uri: lb://wallet-service
+          predicates:
+            - Path=/api/v1/wallet/**
+          filters:
+            - StripPrefix=0
+            - name: JwtAuth
+
+        # Bet Service (JWT Required)
+        - id: bet-service
+          uri: lb://bet-service
+          predicates:
+            - Path=/api/v1/bets/**
+          filters:
+            - StripPrefix=0
+            - name: JwtAuth
+            - name: CircuitBreaker
+              args:
+                name: betServiceCircuitBreaker
+                fallbackUri: forward:/fallback/bet
+
+        # Internal: Wallet Service (no JWT - for Feign service→gateway→target calls)
+        - id: wallet-service-internal
+          uri: lb://wallet-service
+          predicates:
+            - Path=/internal/api/v1/wallet/**
+          filters:
+            - StripPrefix=1
+
+# Eureka Client
+eureka:
+  client:
+    registerWithEureka: true
+    fetchRegistry: true
+    serviceUrl:
+      defaultZone: ${EUREKA_SERVICE_URL:http://localhost:10000/eureka/}
+  instance:
+    preferIpAddress: true
+
+# Operator Service (for gateway's API key validation call - uses discovery)
+operator:
+  service:
+    url: lb://operator-service
+    timeout: ${OPERATOR_SERVICE_TIMEOUT:2000ms}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus,gateway
+  endpoint:
+    health:
+      show-details: always
+      probes:
+        enabled: true
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+
+# Circuit Breaker
+resilience4j:
+  circuitbreaker:
+    configs:
+      default:
+        registerHealthIndicator: true
+        slidingWindowSize: 10
+        minimumNumberOfCalls: 5
+        permittedNumberOfCallsInHalfOpenState: 3
+        automaticTransitionFromOpenToHalfOpenEnabled: true
+        waitDurationInOpenState: 10s
+        failureRateThreshold: 50
+        eventConsumerBufferSize: 10
+    instances:
+      operatorServiceCircuitBreaker:
+        baseConfig: default
+      betServiceCircuitBreaker:
+        baseConfig: default
+
+logging:
+  level:
+    root: INFO
+    com.b2bplatform: DEBUG
+    com.b2bplatform.gateway: DEBUG
+    org.springframework.cloud.gateway: TRACE

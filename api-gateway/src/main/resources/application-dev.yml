@@ -1,0 +1,21 @@
+# Development profile configuration
+spring:
+  cloud:
+    gateway:
+      routes:
+        # Override routes for development if needed
+        - id: operator-service-dev
+          uri: http://localhost:8081
+          predicates:
+            - Path=/api/v1/operators/**
+          filters:
+            - StripPrefix=0
+
+# JWT Secret for development (change in production!)
+jwt:
+  secret: development-secret-key-change-in-production-minimum-256-bits-required-for-security
+
+logging:
+  level:
+    org.springframework.cloud.gateway: DEBUG
+    com.b2bplatform.gateway: DEBUG

@@ -1,0 +1,37 @@
+# Simplified configuration for testing basic routing
+spring:
+  application:
+    name: api-gateway
+  cloud:
+    gateway:
+      routes:
+        # Operator Service Routes - Minimal Configuration
+        - id: operator-service
+          uri: http://localhost:8081
+          predicates:
+            - Path=/api/v1/operators/**
+  
+  # Redis Configuration (still needed for Gateway to start)
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      timeout: 2000ms
+
+server:
+  port: 8080
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,gateway
+  endpoint:
+    health:
+      show-details: always
+
+logging:
+  level:
+    root: INFO
+    com.b2bplatform: DEBUG
+    org.springframework.cloud.gateway: DEBUG

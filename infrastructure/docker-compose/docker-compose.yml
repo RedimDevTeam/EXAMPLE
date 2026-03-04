@@ -1,0 +1,57 @@
+# B2B Platform - Local infrastructure (PostgreSQL, Redis, Kafka)
+# Kafka is used for async events; use Kafka instead of RabbitMQ.
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: b2b-postgres
+    environment:
+      POSTGRES_DB: b2b_platform
+      POSTGRES_USER: b2b_user
+      POSTGRES_PASSWORD: b2b_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U b2b_user"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: b2b-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  kafka:
+    image: bitnami/kafka:3.6
+    container_name: b2b-kafka
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_CFG_NODE_ID: 0
+      KAFKA_CFG_PROCESS_ROLES: controller,broker
+      KAFKA_CFG_CONTROLLER_QUORUM_VOTERS: 0@kafka:9093
+      KAFKA_CFG_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093
+      KAFKA_CFG_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
+    healthcheck:
+      test: ["CMD-SHELL", "kafka-topics.sh --bootstrap-server localhost:9092 --list || exit 1"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+    volumes:
+      - kafka_data:/bitnami/kafka
+
+volumes:
+  postgres_data:
+  redis_data:
+  kafka_data:
